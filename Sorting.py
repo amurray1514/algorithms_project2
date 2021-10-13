@@ -90,11 +90,23 @@ class Bubble_Sort(Sort):
                     swapped = True
         return args
 
+class Insertion_Sort(Sort):
+    def sort(self, args):
+        for i in range(len(args)):
+            temp = args[i]
+            index = i
+            while index > 0 and args[index - 1] > temp:
+                args[index] = args[index - 1]
+                index -= 1
+            args[index] = temp
+        return args
+
 max_length = 100000
 my_list = list(random.randint(0, 500) for i in range(max_length))  
 for j in range(0,max_length + 1, 1000):  
     li = my_list[:j]
     #Bubble_Sort(li)
-    Merge_Sort(li)
-    Quick_Sort(li)
+    #Merge_Sort(li)
+    #Quick_Sort(li)
+    Insertion_Sort(li)
     print()
