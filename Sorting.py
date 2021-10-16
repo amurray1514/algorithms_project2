@@ -20,12 +20,15 @@ class Sort:
                 return False
         return True
 
-    def experimentSort(self, args):
+    def testSort(self, args):
         t1 = time.perf_counter()
-        args = self.sort(args)
+        try:
+            args = self.sort(args)
+        except RecursionError:
+            return -2  # error return
         t2 = time.perf_counter()
         if not self.isSorted(args):
-            return -1
+            return -1  # "not sorted" return
         return t2 - t1
 
 
@@ -70,22 +73,20 @@ Implementation of quick sort.
 """
 class QuickSort(Sort):
     def partition(self, array, begin, end):
-        pivot_idx = begin
-        for i in range(begin+1, end+1):
+        pivotIdx = begin
+        for i in range(begin + 1, end + 1):
             if array[i] <= array[begin]:
-                pivot_idx += 1
-                array[i], array[pivot_idx] = \
-                    array[pivot_idx], array[i]
-        array[pivot_idx], array[begin] = \
-            array[begin], array[pivot_idx]
-        return pivot_idx
+                pivotIdx += 1
+                array[i], array[pivotIdx] = array[pivotIdx], array[i]
+        array[pivotIdx], array[begin] = array[begin], array[pivotIdx]
+        return pivotIdx
 
     def quick_sort_recursion(self, array, begin, end):
         if begin >= end:
             return
-        pivot_idx = self.partition(array, begin, end)
-        self.quick_sort_recursion(array, begin, pivot_idx-1)
-        self.quick_sort_recursion(array, pivot_idx+1, end)
+        pivotIdx = self.partition(array, begin, end)
+        self.quick_sort_recursion(array, begin, pivotIdx - 1)
+        self.quick_sort_recursion(array, pivotIdx + 1, end)
 
     def sort(self, args):
         self.quick_sort_recursion(args, 0, len(args) - 1)
@@ -104,9 +105,7 @@ class BubbleSort(Sort):
             swapped = False
             for i in range(len(args) - 1):
                 if args[i] > args[i + 1]:
-                    temp = args[i]
-                    args[i] = args[i + 1]
-                    args[i + 1] = temp
+                    args[i], args[i + 1] = args[i + 1], args[i]
                     swapped = True
         return args
 
@@ -119,12 +118,10 @@ Implementation of insertion sort.
 class InsertionSort(Sort):
     def sort(self, args):
         for i in range(len(args)):
-            temp = args[i]
             index = i
-            while index > 0 and args[index - 1] > temp:
-                args[index] = args[index - 1]
+            while index > 0 and args[index - 1] > args[i]:
                 index -= 1
-            args[index] = temp
+            args[i], args[index] = args[index], args[i]
         return args
 
 
@@ -180,44 +177,41 @@ Testing routine (work in progress).
 
 @author: Archer Murray
 """
-def test():
-    mst = MergeSort()
-    qst = QuickSort()
-    bst = BubbleSort()
-    ist = InsertionSort()
-    sz = 50
-    out_str = '{:<30}'.format('Sort')
-    out_str += '{:>10}'.format('Random')
-    out_str += '{:>10}'.format('Sorted')
-    out_str += '{:>10}'.format('Reversed')
-    out_str += '{:>10}'.format('Shattered')
-    out_str += '{:>10}'.format('Rev-Shat')
-    print(out_str)
-    print('-' * 80)
-    while sz < 2000:
-        arrs = getArraySuite(sz)
-        out_str = '{:<30}'.format('Merge Sort, size ' + str(sz))
-        for i in range(5):
-            out_str += '{0:>10f}'.format(
-                mst.experimentSort(arrs[i]))
-        print(out_str)
-        out_str = '{:<30}'.format('Quick Sort, size ' + str(sz))
-        for i in range(5):
-            out_str += '{0:>10f}'.format(
-                qst.experimentSort(arrs[i]))
-        print(out_str)
-        out_str = '{:<30}'.format('Bubble Sort, size ' + str(sz))
-        for i in range(5):
-            out_str += '{0:>10f}'.format(
-                bst.experimentSort(arrs[i]))
-        print(out_str)
-        out_str = '{:<30}'.format('Insertion Sort, size ' + str(sz))
-        for i in range(5):
-            out_str += '{0:>10f}'.format(
-                ist.experimentSort(arrs[i]))
-        print(out_str)
-        sz *= 3
+def integrationTest():
+    with open('results.txt', 'w') as f:
+        mst = MergeSort()
+        qst = QuickSort()
+        bst = BubbleSort()
+        ist = InsertionSort()
+        sz = 50
+        out_str = '{:<30}'.format('Sort')
+        out_str += '{:>10}'.format('Random')
+        out_str += '{:>10}'.format('Sorted')
+        out_str += '{:>10}'.format('Reversed')
+        out_str += '{:>10}'.format('Shattered')
+        out_str += '{:>10}'.format('Rev-Shat')
+        f.write(out_str + '\n')
+        f.write('-' * 80 + '\n')
+        while sz < 2000:
+            arrs = getArraySuite(sz)
+            out_str = '{:<30}'.format('Merge Sort, size ' + str(sz))
+            for i in range(5):
+                out_str += '{0:>10f}'.format(mst.testSort(arrs[i]))
+            f.write(out_str + '\n')
+            out_str = '{:<30}'.format('Quick Sort, size ' + str(sz))
+            for i in range(5):
+                out_str += '{0:>10f}'.format(qst.testSort(arrs[i]))
+            f.write(out_str + '\n')
+            out_str = '{:<30}'.format('Bubble Sort, size ' + str(sz))
+            for i in range(5):
+                out_str += '{0:>10f}'.format(bst.testSort(arrs[i]))
+            f.write(out_str + '\n')
+            out_str = '{:<30}'.format('Insertion Sort, size ' + str(sz))
+            for i in range(5):
+                out_str += '{0:>10f}'.format(ist.testSort(arrs[i]))
+            f.write(out_str + '\n')
+            sz *= 2
 
 
 if __name__ == '__main__':
-    test()
+    integrationTest()
