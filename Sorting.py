@@ -195,6 +195,9 @@ def integrationTest():
     with open('results.txt', 'w') as f:
         f.write('*' * 60 + '\n')
         f.write('Sorting Algorithm Experiment Results\n')
+        f.write('Each table entry is the trimmed average of '
+                + str(NUM_TRIALS) + ' trials.\n')
+        f.write('Blank cells indicate insufficient successful trials.\n')
         f.write('*' * 60 + '\n\n')
         for s in sorts:
             # Write table header
@@ -250,8 +253,18 @@ def integrationTest():
                 f.write('\n')
                 print('Completed size', sz)
             f.write('\n')
+            print('\n')
     print('Experiment complete. Results can be found in results.txt.')
 
 
 if __name__ == '__main__':
+    # Unit test
+    arr = [rnd.randrange(100) for i in range(10)]
+    sorts = (Merge_Sort(), Quick_Sort(), Bubble_Sort(), Insertion_Sort())
+    for s in sorts:
+        print(s.getSortName(), 'test')
+        print(s.sort(dcopy(arr)))
+        print('Time:', s.testSort(dcopy(arr)), 'seconds')
+    print('\n')
+    # Integration test
     integrationTest()
