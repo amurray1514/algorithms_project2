@@ -13,6 +13,9 @@ class Sort:
 
     def sort(self, args):
         pass
+    
+    def getSortName(self):
+        return self.__class__.__name__.replace('_', ' ')
 
     def isSorted(self, args):
         for i in range(len(args) - 1):
@@ -37,7 +40,7 @@ Implementation of merge sort.
 
 @author: Josh Hicks
 """
-class MergeSort(Sort):
+class Merge_Sort(Sort):
     def sort(self, args):
         if(len(args) <= 1):
             return args
@@ -71,7 +74,7 @@ Implementation of quick sort.
 
 @author: Josh Hicks
 """
-class QuickSort(Sort):
+class Quick_Sort(Sort):
     def partition(self, array, begin, end):
         pivotIdx = begin
         for i in range(begin + 1, end + 1):
@@ -98,7 +101,7 @@ Implementation of bubble sort.
 
 @author: Josh Hicks
 """
-class BubbleSort(Sort):
+class Bubble_Sort(Sort):
     def sort(self, args):
         swapped = True
         while swapped:
@@ -115,13 +118,15 @@ Implementation of insertion sort.
 
 @author: Levi Lewis
 """
-class InsertionSort(Sort):
+class Insertion_Sort(Sort):
     def sort(self, args):
         for i in range(len(args)):
+            temp = args[i]
             index = i
-            while index > 0 and args[index - 1] > args[i]:
+            while index > 0 and args[index - 1] > temp:
+                args[index] = args[index - 1]
                 index -= 1
-            args[i], args[index] = args[index], args[i]
+            args[index] = temp
         return args
 
 
@@ -172,45 +177,80 @@ def getArraySuite(size):
     return (arr1, arr2, arr3, arr4, arr5)
 
 
+# The number of times to run each sorting algorithm
+# for each case in the integration test.
+NUM_TRIALS = 100
+# The number of times to trim at each edge
+# when computing the average time for each sort and size.
+NUM_TRIMS = 10
+
 """
-Testing routine (work in progress).
+Integration test.
 
 @author: Archer Murray
 """
 def integrationTest():
+    sorts = (Merge_Sort(), Quick_Sort(), Bubble_Sort(), Insertion_Sort())
+    # Perform the test
     with open('results.txt', 'w') as f:
-        mst = MergeSort()
-        qst = QuickSort()
-        bst = BubbleSort()
-        ist = InsertionSort()
-        sz = 50
-        out_str = '{:<30}'.format('Sort')
-        out_str += '{:>10}'.format('Random')
-        out_str += '{:>10}'.format('Sorted')
-        out_str += '{:>10}'.format('Reversed')
-        out_str += '{:>10}'.format('Shattered')
-        out_str += '{:>10}'.format('Rev-Shat')
-        f.write(out_str + '\n')
-        f.write('-' * 80 + '\n')
-        while sz < 2000:
-            arrs = getArraySuite(sz)
-            out_str = '{:<30}'.format('Merge Sort, size ' + str(sz))
-            for i in range(5):
-                out_str += '{0:>10f}'.format(mst.testSort(arrs[i]))
-            f.write(out_str + '\n')
-            out_str = '{:<30}'.format('Quick Sort, size ' + str(sz))
-            for i in range(5):
-                out_str += '{0:>10f}'.format(qst.testSort(arrs[i]))
-            f.write(out_str + '\n')
-            out_str = '{:<30}'.format('Bubble Sort, size ' + str(sz))
-            for i in range(5):
-                out_str += '{0:>10f}'.format(bst.testSort(arrs[i]))
-            f.write(out_str + '\n')
-            out_str = '{:<30}'.format('Insertion Sort, size ' + str(sz))
-            for i in range(5):
-                out_str += '{0:>10f}'.format(ist.testSort(arrs[i]))
-            f.write(out_str + '\n')
-            sz *= 2
+        f.write('*' * 60 + '\n')
+        f.write('Sorting Algorithm Experiment Results\n')
+        f.write('*' * 60 + '\n\n')
+        for s in sorts:
+            # Write table header
+            f.write('=' * 60 + '\n')
+            f.write(s.getSortName() + '\n')
+            f.write('=' * 60 + '\n\n')
+            f.write('{:>10}'.format('Size'))
+            f.write('{:>10}'.format('Random'))
+            f.write('{:>10}'.format('Sorted'))
+            f.write('{:>10}'.format('Reversed'))
+            f.write('{:>10}'.format('Shattered'))
+            f.write('{:>10}'.format('Rev-Shat') + '\n')
+            f.write('-' * 60 + '\n')
+            # Get sizes to test
+            sizes = list()
+            print('Enter array sizes to test for', s.getSortName())
+            print('Enter sizes one at a time, then enter "s" '
+                  + 'to begin the test.')
+            print('Warning: Sizes exceeding 2000 may cause recursion errors '
+                  + 'when testing divide-and-conquer sorts.')
+            sz_str = ''
+            while not sz_str.lower().startswith('s'):
+                sz_str = input('Size ' + str(len(sizes) + 1) + ': ')
+                try:
+                    sizes.append(int(sz_str))
+                except ValueError:
+                    # The user inputted something that
+                    # cannot be converted to int
+                    pass
+            # Perform sorts based on sizes
+            for sz in sizes:
+                times = [list(), list(), list(), list(), list()]
+                for trial in range(NUM_TRIALS):
+                    arrs = getArraySuite(sz)
+                    for i in range(5):
+                        t = s.testSort(arrs[i])
+                        if t >= 0:
+                            times[i].append(t)
+                f.write('{:>10d}'.format(sz))
+                for i in range(5):
+                    # Compute the trimmed average of the times
+                    times[i].sort()
+                    if len(times[i]) > 2 * NUM_TRIMS:
+                        trimmed = times[i] \
+                            [NUM_TRIMS:(len(times[i]) - NUM_TRIMS)]
+                        time = 0
+                        for t in trimmed:
+                            time += t
+                        time /= len(trimmed)
+                        f.write('{:>10f}'.format(time))
+                    else:
+                        f.write(' ' * 10)
+                f.write('\n')
+                print('Completed size', sz)
+            f.write('\n')
+    print('Experiment complete. Results can be found in results.txt.')
 
 
 if __name__ == '__main__':
