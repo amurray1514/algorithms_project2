@@ -77,11 +77,15 @@ Implementation of quick sort.
 class Quick_Sort(Sort):
     def partition(self, array, begin, end):
         pivotIdx = begin
+        le = list()
+        gt = list()
         for i in range(begin + 1, end + 1):
             if array[i] <= array[begin]:
+                le.append(array[i])
                 pivotIdx += 1
-                array[i], array[pivotIdx] = array[pivotIdx], array[i]
-        array[pivotIdx], array[begin] = array[begin], array[pivotIdx]
+            else:
+                gt.append(array[i])
+        array[begin:(end + 1)] = le + [array[begin]] + gt
         return pivotIdx
 
     def quick_sort_recursion(self, array, begin, end):
@@ -156,17 +160,39 @@ def shatter(arr):
 
 
 """
-Returns a 5-tuple of arrays of the given size.
+"Medianizes" the given array by repeatedly splitting it in two,
+"medianizing" the two halves, and returning an array with the
+median as the first element. "Medianizing" a sorted array should
+result in a best-case array for quick sort.
+
+@author: Archer Murray
+"""
+def medianize(arr):
+    if len(arr) < 2:
+        return arr
+    middle = len(arr) // 2
+    left = medianize(arr[:middle])
+    right = medianize(arr[(middle + 1):])
+    return [arr[middle]] + left + right
+
+
+"""
+Returns a 7-tuple of arrays of the given size.
 The first array is random.
 The second array is the first array sorted.
 The third array is the second array reversed.
 The fourth array is the second array "shattered".
 The fifth array is the fourth array reversed.
+The sixth array is the second array "medianized".
+The seventh array is the sixth array reversed.
 
 @author: Archer Murray
 """
 def getArraySuite(size):
-    arr1 = [rnd.randrange(size) for i in range(size)]
+    arr1 = [i for i in range(size)]
+    for i in range(1, size):
+        index = rnd.randrange(i)
+        arr1[i], arr1[index] = arr1[index], arr1[i]
     arr2 = dcopy(arr1)
     arr2.sort()
     arr3 = dcopy(arr2)
@@ -174,7 +200,10 @@ def getArraySuite(size):
     arr4 = shatter(dcopy(arr2))
     arr5 = dcopy(arr4)
     arr5.reverse()
-    return (arr1, arr2, arr3, arr4, arr5)
+    arr6 = medianize(dcopy(arr2))
+    arr7 = dcopy(arr6)
+    arr7.reverse()
+    return (arr1, arr2, arr3, arr4, arr5, arr6, arr7)
 
 
 # The number of times to run each sorting algorithm
@@ -193,24 +222,26 @@ def integrationTest():
     sorts = (Merge_Sort(), Quick_Sort(), Bubble_Sort(), Insertion_Sort())
     # Perform the test
     with open('results.txt', 'w') as f:
-        f.write('*' * 60 + '\n')
+        f.write('*' * 80 + '\n')
         f.write('Sorting Algorithm Experiment Results\n')
         f.write('Each table entry is the trimmed average of '
                 + str(NUM_TRIALS) + ' trials.\n')
         f.write('Blank cells indicate insufficient successful trials.\n')
-        f.write('*' * 60 + '\n\n')
+        f.write('*' * 80 + '\n\n')
         for s in sorts:
             # Write table header
-            f.write('=' * 60 + '\n')
+            f.write('=' * 80 + '\n')
             f.write(s.getSortName() + '\n')
-            f.write('=' * 60 + '\n\n')
+            f.write('=' * 80 + '\n\n')
             f.write('{:>10}'.format('Size'))
             f.write('{:>10}'.format('Random'))
             f.write('{:>10}'.format('Sorted'))
             f.write('{:>10}'.format('Reversed'))
             f.write('{:>10}'.format('Shattered'))
-            f.write('{:>10}'.format('Rev-Shat') + '\n')
-            f.write('-' * 60 + '\n')
+            f.write('{:>10}'.format('Rev-Shat'))
+            f.write('{:>10}'.format('Med-ized'))
+            f.write('{:>10}'.format('Rev-Med') + '\n')
+            f.write('-' * 80 + '\n')
             # Get sizes to test
             sizes = list()
             print('Enter array sizes to test for', s.getSortName())
@@ -229,15 +260,16 @@ def integrationTest():
                     pass
             # Perform sorts based on sizes
             for sz in sizes:
-                times = [list(), list(), list(), list(), list()]
+                times = [list(), list(), list(), list(),
+                         list(), list(), list()]
                 for trial in range(NUM_TRIALS):
                     arrs = getArraySuite(sz)
-                    for i in range(5):
+                    for i in range(7):
                         t = s.testSort(arrs[i])
                         if t >= 0:
                             times[i].append(t)
                 f.write('{:>10d}'.format(sz))
-                for i in range(5):
+                for i in range(7):
                     # Compute the trimmed average of the times
                     times[i].sort()
                     if len(times[i]) > 2 * NUM_TRIMS:
@@ -258,13 +290,16 @@ def integrationTest():
 
 
 if __name__ == '__main__':
-    # Unit test
-    arr = [rnd.randrange(100) for i in range(10)]
+    # Test all sorts
+    arrs = getArraySuite(10)
     sorts = (Merge_Sort(), Quick_Sort(), Bubble_Sort(), Insertion_Sort())
     for s in sorts:
         print(s.getSortName(), 'test')
-        print(s.sort(dcopy(arr)))
-        print('Time:', s.testSort(dcopy(arr)), 'seconds')
+        print(s.sort(dcopy(arrs[0])))
+        print('Time:', s.testSort(dcopy(arrs[0])), 'seconds')
+    # Test array suite
+    for a in arrs:
+        print(a)
     print('\n')
     # Integration test
     integrationTest()
